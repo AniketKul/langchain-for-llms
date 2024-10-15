@@ -1,3 +1,5 @@
 python-dotenv
 openai
 langchain
+tiktoken
+pandas

@@ -7,6 +7,20 @@ from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
 
+# account for deprecation of LLM model
+import datetime
+# Get the current date
+current_date = datetime.datetime.now().date()
+
+# Define the date after which the model should be set to "gpt-3.5-turbo"
+target_date = datetime.date(2024, 6, 12)
+
+# Set the model variable based on the current date
+if current_date > target_date:
+    llm_model = "gpt-3.5-turbo"
+else:
+    llm_model = "gpt-3.5-turbo-0301"
+
 ### Chat API : OpenAI ###
 def get_completion(prompt, model=llm_model):
     messages = [{"role": "user", "content": prompt}]
@@ -204,8 +218,47 @@ response_schemas = [gift_schema,
                     delivery_days_schema,
                     price_value_schema]
 
+output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
+format_instructions = output_parser.get_format_instructions()
 
+print(format_instructions)
+
+review_template_2 = """\
+For the following text, extract the following information:
+
+gift: Was the item purchased as a gift for someone else? \
+Answer True if yes, False if not or unknown.
+
+delivery_days: How many days did it take for the product\
+to arrive? If this information is not found, output -1.
+
+price_value: Extract any sentences about the value or price,\
+and output them as a comma separated Python list.
+
+text: {text}
+
+{format_instructions}
+"""
+
+prompt = ChatPromptTemplate.from_template(template=review_template_2)
+
+messages = prompt.format_messages(text=customer_review, 
+                                format_instructions=format_instructions)
+
+print(messages[0].content)
+
+response = chat(messages)
+
+print(response.content)
+
+output_dict = output_parser.parse(response.content)
+
+print(output_dict)
+
+print(type(output_dict))
+
+print(output_dict.get('delivery_days'))
 
 
 
