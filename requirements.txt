@@ -4,3 +4,5 @@ langchain
 tiktoken
 pandas
 docarray
+wikipedia
+DateTime
